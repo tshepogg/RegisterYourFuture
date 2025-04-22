@@ -10,14 +10,14 @@
       *::after {
         box-sizing: border-box;
       }
-      body,
-      html {
+      html,
+      body {
         margin: 0;
         padding: 0;
         height: 100%;
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         background: #f0f4f8;
         font-family: sans-serif;
       }
@@ -43,6 +43,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        padding: 30px;
         backface-visibility: hidden;
         border-radius: 12px;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -50,14 +51,13 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 30px;
       }
       .front {
         background: linear-gradient(135deg, #6dd5ed, #2193b0);
-        color: white;
+        color: #fff;
       }
       .back {
-        background: white;
+        background: #fff;
         transform: rotateY(180deg);
       }
       .close-btn {
@@ -81,15 +81,29 @@
         margin-top: 12px;
         padding: 10px 20px;
         background: #2193b0;
-        color: white;
+        color: #fff;
         border: none;
         border-radius: 4px;
-        font-size: 16px;
+        cursor: pointer;
+      }
+      /* Export button styling */
+      #exportBtn {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 16px;
+        background: #444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
         cursor: pointer;
       }
     </style>
   </head>
   <body>
+    <button id="exportBtn">Export Registrations</button>
+
     <div class="flip-container" id="flipContainer">
       <div class="card">
         <div class="card-face front" id="frontFace">
@@ -124,28 +138,53 @@
     </div>
 
     <script>
+      // Utility: convert array of objects to CSV
+      function toCSV(arr) {
+        if (!arr.length) return "";
+        const headers = Object.keys(arr[0]);
+        const rows = arr.map((obj) =>
+          headers
+            .map((h) => `"${(obj[h] || "").toString().replace(/"/g, '""')}"`)
+            .join(",")
+        );
+        return [headers.join(","), ...rows].join("\r\n");
+      }
+
+      // Load or initialize submissions array
+      let submissions = JSON.parse(localStorage.getItem("submissions") || "[]");
+
+      // Grab UI elements
       const container = document.getElementById("flipContainer");
       const form = document.getElementById("regForm");
-      const thankYou = document.getElementById("thankYou");
       const closeBtn = document.getElementById("closeBtn");
+      const thankYou = document.getElementById("thankYou");
+      const exportBtn = document.getElementById("exportBtn");
 
-      // 1) Flip **on any click** in the front half
-      container.addEventListener("click", (e) => {
-        // if we're already flipped, do nothing here
-        if (container.classList.contains("flipped")) return;
-        // otherwise, flip
-        container.classList.add("flipped");
+      // Flip to form on any front click
+      container.addEventListener("click", () => {
+        if (!container.classList.contains("flipped")) {
+          container.classList.add("flipped");
+        }
       });
 
-      // 2) Close button to unflip
+      // Close button flips back
       closeBtn.addEventListener("click", (e) => {
-        e.stopPropagation(); // prevent container's click
+        e.stopPropagation();
         container.classList.remove("flipped");
       });
 
-      // 3) Submission also unflips after showing thank‑you
+      // Form submission: save, thank-you, then reset & flip back
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+        const entry = {
+          parent: form.parent.value,
+          phone: form.phone.value,
+          email: form.email.value,
+          kids: form.kids.value,
+          date: new Date().toISOString(),
+        };
+        submissions.push(entry);
+        localStorage.setItem("submissions", JSON.stringify(submissions));
         form.style.display = "none";
         thankYou.style.display = "block";
         setTimeout(() => {
@@ -154,6 +193,19 @@
           form.style.display = "block";
           thankYou.style.display = "none";
         }, 2000);
+      });
+
+      // Export button: generate CSV & download
+      exportBtn.addEventListener("click", () => {
+        const csv = toCSV(submissions);
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "registrations.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       });
     </script>
   </body>
