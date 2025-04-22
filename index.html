@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Flip‑Card Registration</title>
     <style>
-      /* Center container */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
       body,
       html {
         margin: 0;
@@ -17,53 +21,54 @@
         background: #f0f4f8;
         font-family: sans-serif;
       }
-      /* Flip container with perspective */
       .flip-container {
         width: 320px;
         height: 420px;
-        perspective: 1000px; /* 3D depth */
+        perspective: 1000px;
       }
-      /* Inner card that flips */
       .card {
         width: 100%;
         height: 100%;
         position: relative;
-        transform-style: preserve-3d; /* children in 3D space */
-        transition: transform 0.6s ease; /* smooth flip */
+        transform-style: preserve-3d;
+        transition: transform 0.6s ease;
         cursor: pointer;
       }
-      /* Apply flip when toggled */
       .flipped .card {
         transform: rotateY(180deg);
       }
-      /* Front & back faces */
       .card-face {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        backface-visibility: hidden; /* hide rear face */
+        backface-visibility: hidden;
         border-radius: 12px;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 20px;
-        box-sizing: border-box;
+        padding: 30px;
       }
-      /* Front styling */
       .front {
-        background: linear-gradient(135deg, #ed6d6d, #ff0505);
+        background: linear-gradient(135deg, #6dd5ed, #2193b0);
         color: white;
       }
-      /* Back styling (rotated) */
       .back {
         background: white;
         transform: rotateY(180deg);
       }
-      /* Form inputs */
+      .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        z-index: 2;
+      }
       .back input {
         width: 100%;
         margin: 8px 0;
@@ -72,7 +77,6 @@
         border-radius: 4px;
         font-size: 14px;
       }
-      /* Submit button */
       .back button {
         margin-top: 12px;
         padding: 10px 20px;
@@ -88,14 +92,12 @@
   <body>
     <div class="flip-container" id="flipContainer">
       <div class="card">
-        <!-- FRONT SIDE -->
         <div class="card-face front" id="frontFace">
           <h2>Open a Bright Future!</h2>
           <p>Click to register your kids’ accounts!</p>
         </div>
-
-        <!-- BACK SIDE -->
-        <div class="card-face back" id="backFace">
+        <div class="card-face back">
+          <div class="close-btn" id="closeBtn">&times;</div>
           <form id="regForm">
             <input type="text" name="parent" placeholder="Your Name" required />
             <input
@@ -125,18 +127,27 @@
       const container = document.getElementById("flipContainer");
       const form = document.getElementById("regForm");
       const thankYou = document.getElementById("thankYou");
+      const closeBtn = document.getElementById("closeBtn");
 
-      // Flip to back on front-click
-      container.querySelector(".front").addEventListener("click", () => {
+      // 1) Flip **on any click** in the front half
+      container.addEventListener("click", (e) => {
+        // if we're already flipped, do nothing here
+        if (container.classList.contains("flipped")) return;
+        // otherwise, flip
         container.classList.add("flipped");
       });
 
-      // Handle form submit
+      // 2) Close button to unflip
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // prevent container's click
+        container.classList.remove("flipped");
+      });
+
+      // 3) Submission also unflips after showing thank‑you
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         form.style.display = "none";
         thankYou.style.display = "block";
-        // After a delay, flip back and reset
         setTimeout(() => {
           container.classList.remove("flipped");
           form.reset();
