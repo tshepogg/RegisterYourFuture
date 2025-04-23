@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Flip‑Card Registration</title>
+    <title>Flip‑Card Registration with Cloud Storage</title>
     <style>
       *,
       *::before,
@@ -21,8 +21,29 @@
         background: #f0f4f8;
         font-family: sans-serif;
       }
+
+      /* Logo sizing and spacing */
+      .logo {
+        max-width: 300px; /* adjust to taste */
+        height: auto;
+        margin-bottom: 16px;
+        display: block;
+      }
+
+      #registerBtn {
+        position: absolute;
+        top: 85%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 16px;
+        background: #444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
       .flip-container {
-        width: 320px;
+        width: 350px;
         height: 420px;
         perspective: 1000px;
       }
@@ -53,7 +74,7 @@
         align-items: center;
       }
       .front {
-        background: linear-gradient(135deg, #6dd5ed, #2193b0);
+        background: linear-gradient(135deg, #ed6d6d, #b02121);
         color: #fff;
       }
       .back {
@@ -75,25 +96,11 @@
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 4px;
-        font-size: 14px;
       }
       .back button {
         margin-top: 12px;
         padding: 10px 20px;
-        background: #2193b0;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      /* Export button styling */
-      #exportBtn {
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 8px 16px;
-        background: #444;
+        background: #b02121;
         color: #fff;
         border: none;
         border-radius: 4px;
@@ -102,18 +109,35 @@
     </style>
   </head>
   <body>
-    <button id="exportBtn">Export Registrations</button>
+    <!-- Export button
+    <button id="exportBtn">Export Registrations</button>-->
 
+    <!-- Flip‑card container -->
     <div class="flip-container" id="flipContainer">
       <div class="card">
+        <!-- Front face -->
         <div class="card-face front" id="frontFace">
-          <h2>Open a Bright Future!</h2>
-          <p>Click to register your kids’ accounts!</p>
+          <img
+            src="https://images.quicket.co.za/0636145_0.jpeg"
+            alt="Absa Logo"
+            class="logo"
+          />
+          <h2><center>Open Future U account for your little one!</center></h2>
+          <p>
+            <center>Register to be contacted about Absa products!</center>
+          </p>
+          <button id="registerBtn">Click Here</button>
         </div>
+        <!-- Back face -->
         <div class="card-face back">
           <div class="close-btn" id="closeBtn">&times;</div>
           <form id="regForm">
-            <input type="text" name="parent" placeholder="Your Name" required />
+            <input
+              type="text"
+              name="parent"
+              placeholder="Your Full Name"
+              required
+            />
             <input
               type="tel"
               name="phone"
@@ -126,7 +150,12 @@
               placeholder="Email Address"
               required
             />
-            <input type="text" name="kids" placeholder="Kids’ Names" required />
+            <input
+              type="text"
+              name="kids"
+              placeholder="Products of Interest"
+              required
+            />
             <button type="submit">Submit</button>
           </form>
           <div id="thankYou" style="display: none; text-align: center">
@@ -137,43 +166,45 @@
       </div>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <script>
-      // Utility: convert array of objects to CSV
-      function toCSV(arr) {
-        if (!arr.length) return "";
-        const headers = Object.keys(arr[0]);
-        const rows = arr.map((obj) =>
-          headers
-            .map((h) => `"${(obj[h] || "").toString().replace(/"/g, '""')}"`)
-            .join(",")
-        );
-        return [headers.join(","), ...rows].join("\r\n");
-      }
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyB-Nd4jqzD_4kGRl8v6ia9zILeRLkkNEvU",
+        authDomain: "registeryourfuture.firebaseapp.com",
+        databaseURL: "https://registeryourfuture-default-rtdb.firebaseio.com",
+        projectId: "registeryourfuture",
+        storageBucket: "registeryourfuture.firebasestorage.app",
+        messagingSenderId: "697117686663",
+        appId: "1:697117686663:web:47855382fa03b2b9b13122",
+        measurementId: "G-Z6LGLVMB6D",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
 
-      // Load or initialize submissions array
-      let submissions = JSON.parse(localStorage.getItem("submissions") || "[]");
-
-      // Grab UI elements
+      // UI references
       const container = document.getElementById("flipContainer");
       const form = document.getElementById("regForm");
       const closeBtn = document.getElementById("closeBtn");
       const thankYou = document.getElementById("thankYou");
       const exportBtn = document.getElementById("exportBtn");
 
-      // Flip to form on any front click
+      // Flip to form
       container.addEventListener("click", () => {
         if (!container.classList.contains("flipped")) {
           container.classList.add("flipped");
         }
       });
-
-      // Close button flips back
+      // Close form
       closeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         container.classList.remove("flipped");
       });
 
-      // Form submission: save, thank-you, then reset & flip back
+      // Handle submit: push to RTDB
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         const entry = {
@@ -181,10 +212,9 @@
           phone: form.phone.value,
           email: form.email.value,
           kids: form.kids.value,
-          date: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
         };
-        submissions.push(entry);
-        localStorage.setItem("submissions", JSON.stringify(submissions));
+        db.ref("registrations").push(entry);
         form.style.display = "none";
         thankYou.style.display = "block";
         setTimeout(() => {
@@ -195,17 +225,38 @@
         }, 2000);
       });
 
-      // Export button: generate CSV & download
+      // Export with password prompt
       exportBtn.addEventListener("click", () => {
-        const csv = toCSV(submissions);
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "registrations.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const pw = prompt("Enter password to export:");
+        if (pw !== "passwordtemp") {
+          alert("Incorrect password");
+          return;
+        }
+        db.ref("registrations")
+          .once("value")
+          .then((snapshot) => {
+            const data = snapshot.val() || {};
+            const arr = Object.values(data);
+            if (!arr.length) {
+              alert("No registrations to export");
+              return;
+            }
+            const headers = Object.keys(arr[0]);
+            const rows = arr.map((obj) =>
+              headers
+                .map((h) => `"${(obj[h] || "").replace(/"/g, '""')}"`)
+                .join(",")
+            );
+            const csv = [headers.join(","), ...rows].join("\r\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "registrations.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          });
       });
     </script>
   </body>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Registrations</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f4f8;
+        margin: 0;
+        padding: 0;
+      }
+      h2 {
+        text-align: center;
+        margin: 20px;
+        color: #333;
+      }
+      .container {
+        width: 80%;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+      th {
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      .btn {
+        padding: 10px 15px;
+        background-color: #444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 10px 0;
+        display: block;
+        width: 200px;
+        margin: 20px auto;
+      }
+      .btn:hover {
+        background-color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Registered Parents</h2>
+      <button class="btn" id="exportBtn">Export to Excel</button>
+      <table id="registrationsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Parent Name</th>
+            <th>Phone Number</th>
+            <th>Email Address</th>
+            <th>Kids' Names</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyB-Nd4jqzD_4kGRl8v6ia9zILeRLkkNEvU",
+        authDomain: "registeryourfuture.firebaseapp.com",
+        databaseURL: "https://registeryourfuture-default-rtdb.firebaseio.com",
+        projectId: "registeryourfuture",
+        storageBucket: "registeryourfuture.firebasestorage.app",
+        messagingSenderId: "697117686663",
+        appId: "1:697117686663:web:47855382fa03b2b9b13122",
+        measurementId: "G-Z6LGLVMB6D",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      // UI references
+      const tableBody = document.getElementById("registrationsTable").getElementsByTagName("tbody")[0];
+      const exportBtn = document.getElementById("exportBtn");
+
+      // Fetch data from Firebase and populate the table
+      db.ref("registrations").on("value", (snapshot) => {
+        const data = snapshot.val();
+        const rows = data ? Object.values(data) : [];
+        tableBody.innerHTML = ""; // Clear the table before adding new rows
+        rows.forEach((entry, index) => {
+          const row = tableBody.insertRow();
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${entry.parent}</td>
+            <td>${entry.phone}</td>
+            <td>${entry.email}</td>
+            <td>${entry.kids}</td>
+            <td>${entry.timestamp}</td>
+          `;
+        });
+      });
+
+      // Export registrations to Excel
+      exportBtn.addEventListener("click", () => {
+        db.ref("registrations")
+          .once("value")
+          .then((snapshot) => {
+            const data = snapshot.val() || {};
+            const arr = Object.values(data);
+            if (!arr.length) {
+              alert("No registrations to export");
+              return;
+            }
+            const headers = ["#", "Parent Name", "Phone Number", "Email Address", "Kids' Names", "Timestamp"];
+            const rows = arr.map((obj, index) => [
+              index + 1,
+              obj.parent,
+              obj.phone,
+              obj.email,
+              obj.kids,
+              obj.timestamp,
+            ]);
+            const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\r\n");
+
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "registrations.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          });
+      });
+    </script>
+  </body>
+</html>
