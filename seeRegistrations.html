@@ -29,7 +29,8 @@
         border-collapse: collapse;
         margin-top: 20px;
       }
-      th, td {
+      th,
+      td {
         padding: 12px;
         text-align: left;
         border: 1px solid #ddd;
@@ -94,7 +95,9 @@
       const db = firebase.database();
 
       // UI references
-      const tableBody = document.getElementById("registrationsTable").getElementsByTagName("tbody")[0];
+      const tableBody = document
+        .getElementById("registrationsTable")
+        .getElementsByTagName("tbody")[0];
       const exportBtn = document.getElementById("exportBtn");
 
       // Fetch data from Firebase and populate the table
@@ -126,7 +129,14 @@
               alert("No registrations to export");
               return;
             }
-            const headers = ["#", "Parent Name", "Phone Number", "Email Address", "Kids' Names", "Timestamp"];
+            const headers = [
+              "#",
+              "Parent Name",
+              "Phone Number",
+              "Email Address",
+              "Products",
+              "Timestamp",
+            ];
             const rows = arr.map((obj, index) => [
               index + 1,
               obj.parent,
@@ -135,7 +145,10 @@
               obj.kids,
               obj.timestamp,
             ]);
-            const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\r\n");
+            const csv = [
+              headers.join(","),
+              ...rows.map((row) => row.join(",")),
+            ].join("\r\n");
 
             const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
             const url = URL.createObjectURL(blob);
