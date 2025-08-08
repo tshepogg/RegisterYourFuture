@@ -25,18 +25,22 @@
 
       /* Logo sizing and spacing */
       .logo {
-        max-width: 300px; /* adjust to taste */
+        position: absolute;
+        max-width: 200px; /* adjust to taste */
         height: auto;
-        margin-bottom: 16px;
-        display: block;
+        margin-bottom: 10px;
+        top: 75%;
+        left: 40%;
+        /* display: block; */
       }
 
       #registerBtn {
-        position: absolute;
-        top: 90%;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 8px 16px;
+        /* position: absolute;*/
+        display: block;
+        /* top: 50%;*/
+        /* left: 50%;*/
+        /* transform: translateX(-50%);*/
+        padding: 12px 25px;
         background: #444;
         color: #fff;
         border: none;
@@ -118,14 +122,14 @@
       <div class="card">
         <!-- Front face -->
         <div class="card-face front" id="frontFace">
-          <img src="Stacked logo.jpg" alt="Absa Logo" class="logo" />
-          <h2>
-            <center>Register To Be Contacted About ABSA Products!</center>
-          </h2>
-          <p>
-            <center>Register to be contacted about Absa products!</center>
-          </p>
-          <button id="registerBtn">Click Here</button>
+          <center>
+            <h2>
+              <center>Register To Be Contacted About ABSA Products!</center>
+            </h2>
+            <center><button id="registerBtn">Click Here</button></center>
+
+            <img src="Stacked logo.jpg" alt="Absa Logo" class="logo" />
+          </center>
         </div>
         <!-- Back face -->
         <div class="card-face back">
